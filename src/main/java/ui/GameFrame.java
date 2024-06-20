@@ -1,33 +1,29 @@
 package ui;
 
 import tool.ImageTool;
-
 import javax.swing.*;
 
 /**
- * @author like
- * @since 2020-10-15  11:04
  * 游戏的窗口
  * Java中的窗体类：JFrame
- * 1.所以我们需要使用我们的窗体类继承JFrame
+ * 使用窗体类继承JFrame
  */
 public class GameFrame extends JFrame {
     public static void main(String[] args) {
-        // 1.创建窗口对象
+        // 创建窗口对象
         GameFrame frame = new GameFrame();
-        // 2.创建面板对象
+        // 创建面板对象
         GamePanel panel = new GamePanel(frame);
 
-        // 3.窗体初始化
-        frame.add(panel);// 把面板添加到窗口对象中
-        frame.setVisible(true);// 显示窗口
+        // 窗体初始化
+        frame.add(panel); // 把面板添加到窗口对象中
+        frame.setVisible(true); // 显示窗口
 
-        // 4.游戏开始，生成敌机以及子弹
+        // 游戏开始，生成敌机以及子弹
         panel.action();
 
         System.out.println("游戏运行中···");
     }
-
 
     /**
      * 构造函数设置属性
@@ -49,7 +45,5 @@ public class GameFrame extends JFrame {
 
         System.out.println("GameFrame初始化完成！");
         System.out.println("游戏即将开始");
-
     }
-
 }

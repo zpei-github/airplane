@@ -12,161 +12,183 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * @author like
- * @since 2020-10-15  11:32
  * 游戏的面板
  * 1.继承JPanel
- * 2.
  */
 public class GamePanel extends JPanel {
     // 背景图片
-    private final BufferedImage bgi;
+    private final BufferedImage backgroundImage;
     // 用户飞机
     private final Aircraft aircraft;
     // 敌机集合
-    private final List<BadAircraft> badAircraftList = new ArrayList<>();
+    private final List<BadAircraft> badAircraftList = new CopyOnWriteArrayList<>();
     // 子弹集合
-    private final List<Bullet> bulletList = new ArrayList<>();
-    int badAircraftSum = 0;
-    int bulletNum = 0;
-    int secondBadAircraft = 0;
-    int firstBadAircraft = 0;
+    private final List<Bullet> bulletList = new CopyOnWriteArrayList<>();
+    private int badAircraftCounter = 0;
+    private int bulletCounter = 0;
+    private int mediumBadAircraftCounter = 0;
+    private int largeBadAircraftCounter = 0;
     // 分数
     private int score;
+    // 倒计时
+    private int countdown = 60; // 60秒倒计时
+    private boolean isGameOver = false;
+    private final GameFrame gameFrame;
+    // 日志记录器
+    private static final Logger logger = Logger.getLogger(GamePanel.class.getName());
 
     /**
      * 构造函数
      */
     public GamePanel(GameFrame frame) {
-        // 1.读取背景毒品
-        bgi = ImageTool.getImg("/img/background.png");
+        this.gameFrame = frame;
+        // 读取背景图片
+        backgroundImage = ImageTool.getImg("/img/background.png");
 
-        // 2.初始化飞机
-        // - 用户操作的飞机
+        // 初始化用户飞机
         aircraft = new Aircraft(ImageTool.getImg("/img/me1.png"));
 
-        // 3.使用鼠标来控制飞机
-        // - 创建鼠标适配器
+        // 注册鼠标和键盘事件
+        registerMouseEvents();
+        registerKeyEvents(frame);
+    }
+
+    /**
+     * 注册鼠标事件
+     */
+    private void registerMouseEvents() {
         MouseAdapter ma = new MouseAdapter() {
-            // - 确定鼠标需要监听的事件
-            //      a.鼠标移动  b.鼠标点击 c.鼠标按下去  d.鼠标移入窗口 e.鼠标移出窗口
             @Override
             public void mouseMoved(MouseEvent e) {
-                // - 鼠标控制飞机移动
-                aircraft.move(e);
-                // - 重新绘制飞机的位置
-                repaint();
+                if (!isGameOver) {
+                    aircraft.move(e);
+                    repaint();
+                }
             }
         };
-        // - 注册鼠标适配器
         addMouseListener(ma);
         addMouseMotionListener(ma);
+    }
 
-        // 4.使用键盘适配器
+    /**
+     * 注册键盘事件
+     */
+    private void registerKeyEvents(GameFrame frame) {
         KeyAdapter ka = new KeyAdapter() {
-            // - 确定键盘需要监听的事件
-            //      a.按下键盘按键
             @Override
             public void keyPressed(KeyEvent e) {
-                // - 键盘控制飞机移动
-                aircraft.move(e, 25);
-                // - 重新渲染飞机的位置
-                repaint();
+                if (!isGameOver) {
+                    aircraft.move(e, 25);
+                    repaint();
+                }
             }
         };
-        // - 注册键盘适配器到游戏窗口中，直接注册到界面中无效
         frame.addKeyListener(ka);
     }
 
     /**
-     * 专用画图方法
+     * 画图方法
      *
      * @param g 画笔
      */
     @Override
     public void paint(Graphics g) {
-        // 1.添加图片 - 背景
-        g.drawImage(bgi, 0, 0, null);
-
-        // 2.添加飞机
-
-        // - 用户操作的飞机
-        g.drawImage(aircraft.getAircraftImg(), aircraft.getX(), aircraft.getY(), aircraft.getW(), aircraft.getH(),
-                    null);
-        // - 敌机（小兵）
-        for (int i = 0; i < badAircraftList.size(); i++) {
-            g.drawImage(badAircraftList.get(i).getAircraftImg(), badAircraftList.get(i).getX(),
-                        badAircraftList.get(i).getY(), badAircraftList.get(i).getW(), badAircraftList.get(i).getH(),
-                        null);
+        super.paint(g);
+        g.drawImage(backgroundImage, 0, 0, null);
+        drawAircraft(g);
+        drawBullets(g);
+        drawScore(g);
+        drawCountdown(g);
+        if (isGameOver) {
+            drawGameOver(g);
         }
-        // - 添加子弹
-        for (int i = 0; i < bulletList.size(); i++) {
-            g.drawImage(bulletList.get(i).getAircraftImg(), bulletList.get(i).getX(), bulletList.get(i).getY(),
-                        bulletList.get(i).getW(), bulletList.get(i).getH(), null);
-        }
+    }
 
-        // 3.添加分数
-        g.setColor(Color.black);
+    private void drawAircraft(Graphics g) {
+        g.drawImage(aircraft.getAircraftImg(), aircraft.getX(), aircraft.getY(), aircraft.getW(), aircraft.getH(), null);
+        for (BadAircraft badAircraft : badAircraftList) {
+            g.drawImage(badAircraft.getAircraftImg(), badAircraft.getX(), badAircraft.getY(), badAircraft.getW(), badAircraft.getH(), null);
+        }
+    }
+
+    private void drawBullets(Graphics g) {
+        for (Bullet bullet : bulletList) {
+            g.drawImage(bullet.getAircraftImg(), bullet.getX(), bullet.getY(), bullet.getW(), bullet.getH(), null);
+        }
+    }
+
+    private void drawScore(Graphics g) {
+        g.setColor(Color.BLACK);
         g.setFont(new Font("微软雅黑", Font.BOLD, 20));
         g.drawString("分数：" + score, 10, 30);
+    }
+
+    private void drawCountdown(Graphics g) {
+        g.setColor(Color.RED);
+        g.setFont(new Font("微软雅黑", Font.BOLD, 20));
+        g.drawString("倒计时：" + countdown, 350, 30);
+    }
+
+    private void drawGameOver(Graphics g) {
+        g.setColor(Color.RED);
+        g.setFont(new Font("微软雅黑", Font.BOLD, 50));
+        g.drawString("游戏结束", 120, 300);
     }
 
     /**
      * 游戏开始
      */
     public void action() {
-        // 启动一个线程
         new Thread(() -> {
-            while (true) {
-                // 生成敌机
+            while (!isGameOver) {
                 generateBadAircraft();
-                // 敌机移动
                 moveBadAircraft();
-
-                // 生成子弹
                 generateBullet();
-                // 子弹移动
                 moveBullet();
-
-                // 用户的飞机的子弹是否击中的敌机
-                shootBad();
-
-                // 重新渲染游戏界面
+                checkCollisions();
                 repaint();
-
                 try {
                     TimeUnit.MILLISECONDS.sleep(10);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    logger.log(Level.SEVERE, "Thread interrupted", e);
                 }
-
             }
         }, "action").start();
+
+        // 倒计时线程
+        new Thread(() -> {
+            while (countdown > 0) {
+                try {
+                    TimeUnit.SECONDS.sleep(1);
+                    countdown--;
+                    repaint();
+                } catch (InterruptedException e) {
+                    logger.log(Level.SEVERE, "Thread interrupted", e);
+                }
+            }
+            isGameOver = true;
+            repaint();
+            showGameOverDialog();
+        }, "countdown").start();
     }
 
     /**
-     * 判断是否击中,增加分数。
+     * 判断是否击中敌机，增加分数
      */
-    private void shootBad() {
-        // 遍历所有的子弹 (不能用增强for，有ConcurrentModificationException，因为增强for是使用了迭代器)
-        for (int i = 0; i < bulletList.size(); i++) {
-            Bullet bullet = bulletList.get(i);
-            // 遍历所有的敌机
-            for (int j = 0; j < badAircraftList.size(); j++) {
-                BadAircraft badAircraft = badAircraftList.get(j);
-                // 如果击中，删除并增加粉丝
+    private void checkCollisions() {
+        for (Bullet bullet : bulletList) {
+            for (BadAircraft badAircraft : badAircraftList) {
                 if (badAircraft.shootBy(bullet)) {
-                    // - 敌机删除
                     badAircraftList.remove(badAircraft);
-                    // - 增加分数
-                    this.score += badAircraft.getScore();
-                    // - 子弹删除
                     bulletList.remove(bullet);
+                    score += badAircraft.getScore();
                 }
             }
         }
@@ -185,65 +207,78 @@ public class GamePanel extends JPanel {
      * 生成子弹
      */
     private void generateBullet() {
-        bulletNum++;
-        if (bulletNum == 10) {
-            // 创建子弹对象
-             Bullet bullet1 = new Bullet(ImageTool.getImg("/img/bullet1.png"), aircraft.getX() + 5, aircraft.getY()
-            , 0);
-            Bullet bullet2 =
-                    new Bullet(ImageTool.getImg("/img/bullet1.png"), aircraft.getX() + 45, aircraft.getY() - 20, 1);
-             Bullet bullet3 = new Bullet(ImageTool.getImg("/img/bullet1.png"), aircraft.getX() + 90, aircraft.getY
-            (), 2);
-            // 添加子弹
+        bulletCounter++;
+        if (bulletCounter >= 10) {
+            Bullet bullet1 = new Bullet(ImageTool.getImg("/img/bullet1.png"), aircraft.getX() + 5, aircraft.getY(), 0);
+            Bullet bullet2 = new Bullet(ImageTool.getImg("/img/bullet1.png"), aircraft.getX() + 45, aircraft.getY() - 20, 1);
+            Bullet bullet3 = new Bullet(ImageTool.getImg("/img/bullet1.png"), aircraft.getX() + 90, aircraft.getY(), 2);
             bulletList.add(bullet1);
             bulletList.add(bullet2);
-              bulletList.add(bullet3);
-
-            bulletNum = 0;
+            bulletList.add(bullet3);
+            bulletCounter = 0;
         }
     }
 
     /**
-     * 敌机移动
+     * 移动敌机
      */
     private void moveBadAircraft() {
-        for (BadAircraft ba : badAircraftList) {
-            // 移动
-            ba.move();
+        for (BadAircraft badAircraft : badAircraftList) {
+            badAircraft.move();
         }
     }
 
     /**
      * 生成敌机
-     * - 根据当前方法运行了多少次，来决定生成哪种敌机
      */
     private void generateBadAircraft() {
-        // 生成敌机并保存
-        badAircraftSum++;
-        // 当一个敌机移动二十次就生成另一个新的敌机(小兵)
-        if (badAircraftSum >= 20) {
-            BadAircraft badAircraft = new BadAircraft(ImageTool.getImg("/img/enemy1.png"), 1);
-            badAircraftList.add(badAircraft);
-
-            badAircraftSum = 0;
-            secondBadAircraft++;
+        badAircraftCounter++;
+        if (badAircraftCounter >= 20) {
+            badAircraftList.add(new BadAircraft(ImageTool.getImg("/img/enemy1.png"), 1));
+            badAircraftCounter = 0;
+            mediumBadAircraftCounter++;
         }
-        // 生成第二大的战机
-        if (secondBadAircraft >= 5) {
-            BadAircraft badAircraft = new BadAircraft(ImageTool.getImg("/img/enemy2.png"), 10);
-            badAircraftList.add(badAircraft);
-
-            secondBadAircraft = 0;
-            firstBadAircraft++;
+        if (mediumBadAircraftCounter >= 5) {
+            badAircraftList.add(new BadAircraft(ImageTool.getImg("/img/enemy2.png"), 10));
+            mediumBadAircraftCounter = 0;
+            largeBadAircraftCounter++;
         }
-        // 生成最大的敌机
-        if (firstBadAircraft >= 5) {
+        if (largeBadAircraftCounter >= 5) {
             BadAircraft badAircraft = new BadAircraft(ImageTool.getImg("/img/enemy3.png"), 100);
-            // 设置移动速度
             badAircraft.setStep(1);
             badAircraftList.add(badAircraft);
-
-            firstBadAircraft = 0;
+            largeBadAircraftCounter = 0;
         }
+    }
+
+    /**
+     * 显示游戏结束对话框
+     */
+    private void showGameOverDialog() {
+        String message = String.format("游戏结束！你的分数是：%d。是否重新开始？", score);
+        int option = JOptionPane.showOptionDialog(gameFrame, message, "游戏结束",
+                JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, null, null, null);
+        if (option == JOptionPane.YES_OPTION) {
+            // 重新开始游戏
+            resetGame();
+        } else {
+            System.exit(0);
+        }
+    }
+
+    /**
+     * 重置游戏
+     */
+    private void resetGame() {
+        score = 0;
+        countdown = 60;
+        badAircraftCounter = 0;
+        bulletCounter = 0;
+        mediumBadAircraftCounter = 0;
+        largeBadAircraftCounter = 0;
+        badAircraftList.clear();
+        bulletList.clear();
+        isGameOver = false;
+        action();
     }
 }
