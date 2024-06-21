@@ -39,7 +39,7 @@ public class GamePanel extends JPanel {
     private BulletProp myProp = null;
 
     //子弹发射频率
-    private int bulletVelocity = 20;
+    private int bulletVelocity = 15;
 
     private int badAircraftCounter = 0;
     private int bulletCounter = 0;
@@ -62,7 +62,7 @@ public class GamePanel extends JPanel {
         new Thread(this::playMusic, "Background Music").start();
         this.gameFrame = frame;
         // 读取背景图片
-        backgroundImage = ImageTool.getImg("/img/background.png");
+        backgroundImage = ImageTool.getImg("/img/background.jpeg");
 
         // 初始化用户飞机
         aircraft = new Aircraft(ImageTool.getImg("/img/me1.png"));
@@ -319,17 +319,17 @@ public class GamePanel extends JPanel {
      */
     private void generateBadAircraft() {
         badAircraftCounter++;
-        if (badAircraftCounter >= 20) {
+        if (badAircraftCounter >= 15) {
             badAircraftList.add(new BadAircraft(ImageTool.getImg("/img/enemy1.png"), 1));
             badAircraftCounter = 0;
             mediumBadAircraftCounter++;
         }
-        if (mediumBadAircraftCounter >= 5) {
+        if (mediumBadAircraftCounter >= 3) {
             badAircraftList.add(new BadAircraft(ImageTool.getImg("/img/enemy2.png"), 10));
             mediumBadAircraftCounter = 0;
             largeBadAircraftCounter++;
         }
-        if (largeBadAircraftCounter >= 5) {
+        if (largeBadAircraftCounter >= 2) {
             BadAircraft badAircraft = new BadAircraft(ImageTool.getImg("/img/enemy3.png"), 100);
             badAircraft.setStep(1);
             badAircraftList.add(badAircraft);
@@ -350,9 +350,6 @@ public class GamePanel extends JPanel {
      * 显示游戏结束对话框
      */
     private void showGameOverDialog() {
-        if(!this.isGameOver){
-            return;
-        }
         String message = String.format("游戏结束！你的分数是：%d。是否重新开始？", score);
         int option = JOptionPane.showOptionDialog(gameFrame, message, "游戏结束",
                 JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, null, null, null);

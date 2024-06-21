@@ -29,8 +29,8 @@ public class BulletProp extends Plane {
         h = aircraftImg.getHeight();
 
         // 定义道具的初始位置
-        this.x = random.nextInt(512 - w);
-        this.y = random.nextInt(512 - h);;
+        this.x = random.nextInt(900 - w);
+        this.y = random.nextInt(1400 - h);;
 
         // 设置敌对道具移动的速度
         step = 0;

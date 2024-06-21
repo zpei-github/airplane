@@ -26,7 +26,7 @@ public class BadAircraft extends Plane {
         h = aircraftImg.getHeight();
 
         // 定义飞机的初始位置
-        this.x = random.nextInt(512 - w);
+        this.x = random.nextInt(900 - w);
         this.y = -h;
 
         // 设置敌对飞机移动的速度

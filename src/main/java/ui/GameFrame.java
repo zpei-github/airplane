@@ -34,7 +34,7 @@ public class GameFrame extends JFrame {
         setTitle("飞机大战-like");
         setIconImage(ImageTool.getImg("/img/Favorite.png"));
         // 设置窗口界面大小
-        setSize(480, 700);
+        setSize(900, 1400);
         // 设置居中显示
         setLocationRelativeTo(null);
         // 设置不允许改变界面大小
