@@ -1,5 +1,7 @@
 package plane;
 
+import bullet.Bullet;
+
 import java.awt.image.BufferedImage;
 import java.util.Random;
 
@@ -53,5 +55,16 @@ public class BadAircraft extends Plane {
 
     public void setScore(int score) {
         this.score = score;
+    }
+    /**
+     * 判断是否碰撞到了飞机
+     *
+     * @param bullet 打击的子弹
+     *
+     * @return 是否打击到了子弹
+     */
+    public boolean shootBy(Bullet bullet) {
+        return this.x <= bullet.x + bullet.w && this.x >= bullet.x - this.w && this.y <= bullet.y + bullet.h &&
+                this.y > bullet.y - this.h;
     }
 }

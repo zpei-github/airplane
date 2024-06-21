@@ -21,7 +21,6 @@ public class GameFrame extends JFrame {
 
         // 游戏开始，生成敌机以及子弹
         panel.action();
-
         System.out.println("游戏运行中···");
     }
 

@@ -67,18 +67,20 @@ public abstract class Plane {
         }
     }
 
+
     /**
-     * 判断是否碰撞到了飞机
+     * 判断是否飞机互相碰撞
      *
-     * @param bullet 打击的子弹
+     * @param plane 打击的子弹
      *
      * @return 是否打击到了子弹
      */
-    public boolean shootBy(Bullet bullet) {
-        return this.x <= bullet.x + bullet.w && this.x >= bullet.x - this.w && this.y <= bullet.y + bullet.h &&
-                this.y > bullet.y - this.h;
+    public boolean touch(Plane plane) {
+        return this.x <= plane.x + plane.w + 1 && this.x >= plane.x - this.w && this.y <= plane.y + plane.h + 1 &&
+                this.y > plane.y - this.h;
 
     }
+
     /**
      * Gets aircraft img.
      *

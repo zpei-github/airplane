@@ -1,7 +1,6 @@
 package bullet;
 
 import plane.Plane;
-
 import java.awt.image.BufferedImage;
 
 /**
@@ -26,7 +25,6 @@ public class Bullet extends Plane {
         this.dir = dir;
     }
 
-
     // 子弹移动的速度
     @Override
     public void move() {
@@ -35,12 +33,15 @@ public class Bullet extends Plane {
             x -= 1;
             y -= 18;
         } else if (dir == 1) {
-            // 垂直
+            // 垂直向上
             y -= 18;
         } else if (dir == 2) {
             // 右上角
             x += 1;
             y -= 18;
+        } else if (dir == -1) {
+            //垂直向下
+            y += 18;
         }
     }
 }

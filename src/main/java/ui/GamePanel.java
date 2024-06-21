@@ -3,21 +3,24 @@ package ui;
 import bullet.Bullet;
 import plane.Aircraft;
 import plane.BadAircraft;
+import plane.BulletProp;
 import tool.ImageTool;
 
 import javax.swing.*;
+import java.applet.Applet;
+import java.applet.AudioClip;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 /**
  * 游戏的面板
  * 1.继承JPanel
@@ -31,6 +34,13 @@ public class GamePanel extends JPanel {
     private final List<BadAircraft> badAircraftList = new CopyOnWriteArrayList<>();
     // 子弹集合
     private final List<Bullet> bulletList = new CopyOnWriteArrayList<>();
+    //道具
+    private BulletProp currentProp = null;
+    private BulletProp myProp = null;
+
+    //子弹发射频率
+    private int bulletVelocity = 20;
+
     private int badAircraftCounter = 0;
     private int bulletCounter = 0;
     private int mediumBadAircraftCounter = 0;
@@ -39,6 +49,7 @@ public class GamePanel extends JPanel {
     private int score;
     // 倒计时
     private int countdown = 60; // 60秒倒计时
+
     private boolean isGameOver = false;
     private final GameFrame gameFrame;
     // 日志记录器
@@ -48,6 +59,7 @@ public class GamePanel extends JPanel {
      * 构造函数
      */
     public GamePanel(GameFrame frame) {
+        new Thread(this::playMusic, "Background Music").start();
         this.gameFrame = frame;
         // 读取背景图片
         backgroundImage = ImageTool.getImg("/img/background.png");
@@ -112,6 +124,9 @@ public class GamePanel extends JPanel {
     }
 
     private void drawAircraft(Graphics g) {
+        if(this.currentProp != null){
+            g.drawImage(currentProp.getAircraftImg(), currentProp.getX(), currentProp.getY(), currentProp.getW(),currentProp.getH(),null);
+        }
         g.drawImage(aircraft.getAircraftImg(), aircraft.getX(), aircraft.getY(), aircraft.getW(), aircraft.getH(), null);
         for (BadAircraft badAircraft : badAircraftList) {
             g.drawImage(badAircraft.getAircraftImg(), badAircraft.getX(), badAircraft.getY(), badAircraft.getW(), badAircraft.getH(), null);
@@ -153,7 +168,8 @@ public class GamePanel extends JPanel {
                 generateBullet();
                 moveBullet();
                 checkCollisions();
-                repaint();
+                checkShoot();
+                checkProp();
                 try {
                     TimeUnit.MILLISECONDS.sleep(10);
                 } catch (InterruptedException e) {
@@ -164,16 +180,35 @@ public class GamePanel extends JPanel {
 
         // 倒计时线程
         new Thread(() -> {
-            while (countdown > 0) {
+            while (countdown > 0  && !isGameOver) {
                 try {
                     TimeUnit.SECONDS.sleep(1);
+                    generateProp();
+                    if(myProp != null){
+                        myProp.setLeftTime(myProp.getLeftTime() - 1);
+                    }
                     countdown--;
-                    repaint();
                 } catch (InterruptedException e) {
                     logger.log(Level.SEVERE, "Thread interrupted", e);
                 }
             }
             isGameOver = true;
+        }, "countdown").start();
+
+        //
+        /* 游戏检测线程
+        * 在此处统一控制游戏界面刷新，并弹出游戏结束窗口
+        * */
+        new Thread(() -> {
+            while (!isGameOver) {
+                try {
+                    //刷新率控制
+                    TimeUnit.MICROSECONDS.sleep(10);
+                    repaint();
+                } catch (InterruptedException e) {
+                    logger.log(Level.SEVERE, "Thread interrupted", e);
+                }
+            }
             repaint();
             showGameOverDialog();
         }, "countdown").start();
@@ -182,7 +217,7 @@ public class GamePanel extends JPanel {
     /**
      * 判断是否击中敌机，增加分数
      */
-    private void checkCollisions() {
+    private void checkShoot() {
         for (Bullet bullet : bulletList) {
             for (BadAircraft badAircraft : badAircraftList) {
                 if (badAircraft.shootBy(bullet)) {
@@ -190,6 +225,35 @@ public class GamePanel extends JPanel {
                     bulletList.remove(bullet);
                     score += badAircraft.getScore();
                 }
+            }
+        }
+    }
+
+    /**
+     * 判断是否与敌机碰撞
+     */
+    private void checkCollisions() {
+        for (BadAircraft badAircraft : badAircraftList) {
+            if (badAircraft.touch(aircraft)) {
+                isGameOver = true;
+            }
+        }
+    }
+
+    /**
+     * 判断道具捡拾与道具消除
+     */
+    private void checkProp() {
+        if(currentProp != null) {
+            if(aircraft.touch(currentProp)){
+                myProp = currentProp;
+                currentProp = null;
+            }
+        }
+
+        if(myProp != null) {
+            if(myProp.getLeftTime() <= 0){
+                myProp = null;
             }
         }
     }
@@ -204,18 +268,40 @@ public class GamePanel extends JPanel {
     }
 
     /**
-     * 生成子弹
+     * 生成自己的子弹
      */
     private void generateBullet() {
         bulletCounter++;
-        if (bulletCounter >= 10) {
-            Bullet bullet1 = new Bullet(ImageTool.getImg("/img/bullet1.png"), aircraft.getX() + 5, aircraft.getY(), 0);
+        if(myProp != null){
+            if (bulletCounter >= myProp.getBulletCount() && myProp.getType() == 5) {
+                Bullet bullet1 = new Bullet(ImageTool.getImg("/img/bullet1.png"), aircraft.getX() + 45, aircraft.getY() - 20, 0);
+                Bullet bullet2 = new Bullet(ImageTool.getImg("/img/bullet2.png"), aircraft.getX() + 45, aircraft.getY() - 20, 1);
+                Bullet bullet3 = new Bullet(ImageTool.getImg("/img/bullet1.png"), aircraft.getX() + 45, aircraft.getY() - 20, 2);
+                bulletList.add(bullet1);
+                bulletList.add(bullet2);
+                bulletList.add(bullet3);
+                bulletCounter = 0;
+            }
+            return;
+        }
+        if (bulletCounter >= bulletVelocity) {
             Bullet bullet2 = new Bullet(ImageTool.getImg("/img/bullet1.png"), aircraft.getX() + 45, aircraft.getY() - 20, 1);
-            Bullet bullet3 = new Bullet(ImageTool.getImg("/img/bullet1.png"), aircraft.getX() + 90, aircraft.getY(), 2);
-            bulletList.add(bullet1);
             bulletList.add(bullet2);
-            bulletList.add(bullet3);
             bulletCounter = 0;
+        }
+    }
+
+
+
+    /*音乐播放器
+    *
+    * */
+    private void playMusic() {
+        File backmusic = new File("src/main/resources/audio/Einswei.mid");
+        try {
+            AudioClip clip = Applet.newAudioClip(backmusic.toURL());
+            clip.loop();
+        } catch (Exception var3) {
         }
     }
 
@@ -252,9 +338,21 @@ public class GamePanel extends JPanel {
     }
 
     /**
+     * 生成道具
+     */
+    private void generateProp() {
+        if(this.currentProp == null && myProp == null){
+            this.currentProp = new BulletProp(ImageTool.getImg("/img/bullet_supply.png"), 5, 5, 15);
+        }
+    }
+
+    /**
      * 显示游戏结束对话框
      */
     private void showGameOverDialog() {
+        if(!this.isGameOver){
+            return;
+        }
         String message = String.format("游戏结束！你的分数是：%d。是否重新开始？", score);
         int option = JOptionPane.showOptionDialog(gameFrame, message, "游戏结束",
                 JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, null, null, null);
@@ -274,6 +372,9 @@ public class GamePanel extends JPanel {
         countdown = 60;
         badAircraftCounter = 0;
         bulletCounter = 0;
+        bulletVelocity = 20;
+        myProp = null;
+        currentProp = null;
         mediumBadAircraftCounter = 0;
         largeBadAircraftCounter = 0;
         badAircraftList.clear();
