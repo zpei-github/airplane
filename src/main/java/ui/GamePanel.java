@@ -148,13 +148,13 @@ public class GamePanel extends JPanel {
     private void drawCountdown(Graphics g) {
         g.setColor(Color.RED);
         g.setFont(new Font("微软雅黑", Font.BOLD, 20));
-        g.drawString("倒计时：" + countdown, 350, 30);
+        g.drawString("倒计时：" + countdown, 750, 30);
     }
 
     private void drawGameOver(Graphics g) {
         g.setColor(Color.RED);
         g.setFont(new Font("微软雅黑", Font.BOLD, 50));
-        g.drawString("游戏结束", 120, 300);
+        g.drawString("游戏结束", 450, 700);
     }
 
     /**
