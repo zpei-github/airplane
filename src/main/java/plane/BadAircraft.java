@@ -33,7 +33,7 @@ public class BadAircraft extends Plane {
         this.y = -h;
 
         // 设置敌对飞机移动的速度
-        step = random.nextInt(16);
+        step = random.nextInt(5);
         this.score = score;
     }
     public BadAircraft(BufferedImage aircraftImg, int score, int blood) {
@@ -48,6 +48,8 @@ public class BadAircraft extends Plane {
         // 定义飞机的初始位置
         this.x = random.nextInt(900 - w);
         this.y = -h;
+
+        this.blood = blood;
 
         // 设置敌对飞机移动的速度
         step = random.nextInt(16);

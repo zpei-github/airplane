@@ -39,7 +39,7 @@ public class GamePanel extends JPanel {
     private BulletProp myProp = null;
 
     //子弹发射频率
-    private int bulletVelocity = 15;
+    private int bulletVelocity = 10;
 
     private int badAircraftCounter = 0;
     private int bulletCounter = 0;
@@ -171,7 +171,9 @@ public class GamePanel extends JPanel {
                 checkShoot();
                 checkProp();
                 try {
-                    TimeUnit.MILLISECONDS.sleep(10);
+                    //刷新率控制
+                    TimeUnit.MILLISECONDS.sleep(20);
+                    repaint();
                 } catch (InterruptedException e) {
                     logger.log(Level.SEVERE, "Thread interrupted", e);
                 }
@@ -202,9 +204,8 @@ public class GamePanel extends JPanel {
         new Thread(() -> {
             while (!isGameOver) {
                 try {
-                    //刷新率控制
-                    TimeUnit.MICROSECONDS.sleep(10);
-                    repaint();
+                    //检测率控制
+                    TimeUnit.MICROSECONDS.sleep(50);
                 } catch (InterruptedException e) {
                     logger.log(Level.SEVERE, "Thread interrupted", e);
                 }
@@ -218,18 +219,16 @@ public class GamePanel extends JPanel {
      * 判断是否击中敌机，增加分数
      */
     private void checkShoot() {
-        for (Bullet bullet : bulletList) {
-            for (BadAircraft badAircraft : badAircraftList) {
+        for (BadAircraft badAircraft : badAircraftList) {
+            for (Bullet bullet : bulletList) {
                 if (badAircraft.shootBy(bullet)) {
+                    bulletList.remove(bullet);
                     if(badAircraft.getBlood() > 0){
                         badAircraft.setBlood(badAircraft.getBlood() - 1);
-                        bulletList.remove(bullet);
                     }
-
                     if(badAircraft.getBlood() <= 0){
                         badAircraftList.remove(badAircraft);
-                        score += badAircraft.getScore();
-                    }
+                        score += badAircraft.getScore();}
                 }
             }
         }
@@ -308,6 +307,7 @@ public class GamePanel extends JPanel {
             AudioClip clip = Applet.newAudioClip(backmusic.toURL());
             clip.loop();
         } catch (Exception var3) {
+            System.out.println(var3.fillInStackTrace());
         }
     }
 
@@ -325,18 +325,18 @@ public class GamePanel extends JPanel {
      */
     private void generateBadAircraft() {
         badAircraftCounter++;
-        if (badAircraftCounter >= 15) {
+        if (badAircraftCounter >= 10) {
             badAircraftList.add(new BadAircraft(ImageTool.getImg("/img/enemy1.png"), 1, 1));
             badAircraftCounter = 0;
             mediumBadAircraftCounter++;
         }
-        if (mediumBadAircraftCounter >= 3) {
-            badAircraftList.add(new BadAircraft(ImageTool.getImg("/img/enemy2.png"), 10, 5));
+        if (mediumBadAircraftCounter >= 8) {
+            badAircraftList.add(new BadAircraft(ImageTool.getImg("/img/enemy2.png"), 15, 5));
             mediumBadAircraftCounter = 0;
             largeBadAircraftCounter++;
         }
-        if (largeBadAircraftCounter >= 2) {
-            BadAircraft badAircraft = new BadAircraft(ImageTool.getImg("/img/enemy3.png"), 100, 20);
+        if (largeBadAircraftCounter >= 15) {
+            BadAircraft badAircraft = new BadAircraft(ImageTool.getImg("/img/enemy3.png"), 100, 25);
             badAircraft.setStep(1);
             badAircraftList.add(badAircraft);
             largeBadAircraftCounter = 0;
