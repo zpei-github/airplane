@@ -32,7 +32,7 @@ public class BulletProp extends Plane {
         this.x = random.nextInt(900 - w);
         this.y = random.nextInt(1400 - h);;
 
-        // 设置敌对道具移动的速度
+        // 设置道具移动的速度
         step = 0;
 
         this.type = type;

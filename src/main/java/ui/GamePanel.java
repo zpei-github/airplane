@@ -221,9 +221,15 @@ public class GamePanel extends JPanel {
         for (Bullet bullet : bulletList) {
             for (BadAircraft badAircraft : badAircraftList) {
                 if (badAircraft.shootBy(bullet)) {
-                    badAircraftList.remove(badAircraft);
-                    bulletList.remove(bullet);
-                    score += badAircraft.getScore();
+                    if(badAircraft.getBlood() > 0){
+                        badAircraft.setBlood(badAircraft.getBlood() - 1);
+                        bulletList.remove(bullet);
+                    }
+
+                    if(badAircraft.getBlood() <= 0){
+                        badAircraftList.remove(badAircraft);
+                        score += badAircraft.getScore();
+                    }
                 }
             }
         }
@@ -320,17 +326,17 @@ public class GamePanel extends JPanel {
     private void generateBadAircraft() {
         badAircraftCounter++;
         if (badAircraftCounter >= 15) {
-            badAircraftList.add(new BadAircraft(ImageTool.getImg("/img/enemy1.png"), 1));
+            badAircraftList.add(new BadAircraft(ImageTool.getImg("/img/enemy1.png"), 1, 1));
             badAircraftCounter = 0;
             mediumBadAircraftCounter++;
         }
         if (mediumBadAircraftCounter >= 3) {
-            badAircraftList.add(new BadAircraft(ImageTool.getImg("/img/enemy2.png"), 10));
+            badAircraftList.add(new BadAircraft(ImageTool.getImg("/img/enemy2.png"), 10, 5));
             mediumBadAircraftCounter = 0;
             largeBadAircraftCounter++;
         }
         if (largeBadAircraftCounter >= 2) {
-            BadAircraft badAircraft = new BadAircraft(ImageTool.getImg("/img/enemy3.png"), 100);
+            BadAircraft badAircraft = new BadAircraft(ImageTool.getImg("/img/enemy3.png"), 100, 20);
             badAircraft.setStep(1);
             badAircraftList.add(badAircraft);
             largeBadAircraftCounter = 0;

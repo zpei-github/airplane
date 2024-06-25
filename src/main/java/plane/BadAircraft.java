@@ -16,6 +16,9 @@ public class BadAircraft extends Plane {
     // 这个飞机的分数
     private int score;
 
+    //血量
+    private int blood;
+
     public BadAircraft(BufferedImage aircraftImg, int score) {
         Random random = new Random();
         // 定义飞机的图片
@@ -31,7 +34,23 @@ public class BadAircraft extends Plane {
 
         // 设置敌对飞机移动的速度
         step = random.nextInt(16);
+        this.score = score;
+    }
+    public BadAircraft(BufferedImage aircraftImg, int score, int blood) {
+        Random random = new Random();
+        // 定义飞机的图片
+        this.aircraftImg = aircraftImg;
 
+        // 定义飞机的宽和高
+        w = aircraftImg.getWidth();
+        h = aircraftImg.getHeight();
+
+        // 定义飞机的初始位置
+        this.x = random.nextInt(900 - w);
+        this.y = -h;
+
+        // 设置敌对飞机移动的速度
+        step = random.nextInt(16);
         this.score = score;
     }
 
@@ -55,6 +74,13 @@ public class BadAircraft extends Plane {
 
     public void setScore(int score) {
         this.score = score;
+    }
+
+    public int getBlood() {
+        return blood;
+    }
+    public void setBlood(int blood) {
+        this.blood = blood;
     }
     /**
      * 判断是否碰撞到了飞机
